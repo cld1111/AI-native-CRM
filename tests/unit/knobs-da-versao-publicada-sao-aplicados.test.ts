@@ -26,8 +26,7 @@
  * controle positivo — instrumento que não acha nada devolve verde igual a
  * instrumento que não achou problema.
  */
-import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -46,7 +45,7 @@ const SEM_CONSUMIDOR_ACEITO: Readonly<Record<string, string>> = {
 };
 
 function camposDaConfig(): string[] {
-  const src = readFileSync(path.join(RAIZ, CONFIG), "utf8");
+  const src = fs.readFileSync(path.join(RAIZ, CONFIG), "utf8");
   const ini = src.indexOf("export interface PublishedAgentConfig");
   const fim = src.indexOf("interface Row", ini);
   expect(ini, "não achei a interface da config publicada").toBeGreaterThan(-1);
@@ -56,17 +55,45 @@ function camposDaConfig(): string[] {
 
 /** Arquivos que leem o campo, fora do próprio módulo que o carrega. */
 function consumidoresDe(campo: string): string[] {
-  try {
-    const saida = execFileSync(
-      "rg",
-      ["-l", "-F", "-e", `agentConfig.${campo}`, "-e", `agentConfig?.${campo}`, "--glob", "*.ts", "--glob", "*.tsx", "lib", "workers", "app"],
-      { cwd: RAIZ, encoding: "utf8" },
-    );
-    return saida.split("\n").filter((f) => f !== "" && !f.includes("agent-config"));
-  } catch {
-    // `rg` sai com 1 quando não encontra nada — ausência, não falha.
-    return [];
-  }
+  // Diretórios que o teste considera relevantes — manter alinhado com a versão
+  // original que usava `rg` com estes paths.
+  const dirs = ["lib", "workers", "app"];
+  const exts = new Set([".ts", ".tsx"]);
+  const encontrados: string[] = [];
+
+  const skipNames = new Set(["node_modules", ".git", "dist", "build", "out"]);
+
+  const patterns = [
+    new RegExp(`\\bagentConfig\\.${campo}\\b`),
+    new RegExp(`\\bagentConfig\\?\\.${campo}\\b`),
+    new RegExp(`\\bagentConfig\\[\\s*['\"\\\\`]${campo}['\"\\\\\`]\\s*\\]`),
+    new RegExp(`\\bagentConfig\\?\\[\\s*['\"\\\\\`]${campo}['\"\\\\\`]\\s*\\]`),
+  ];
+
+  const walk = (base: string) => {
+    if (!fs.existsSync(base)) return;
+    for (const ent of fs.readdirSync(base, { withFileTypes: true })) {
+      if (skipNames.has(ent.name)) continue;
+      const p = path.join(base, ent.name);
+      if (ent.isDirectory()) {
+        walk(p);
+      } else if (ent.isFile() && exts.has(path.extname(ent.name))) {
+        // Ignorar o próprio módulo que declara a interface — o teste original
+        // também filtrava isso.
+        if (p.includes("agent-config")) continue;
+        try {
+          const txt = fs.readFileSync(p, "utf8");
+          if (patterns.some((r) => r.test(txt))) encontrados.push(p);
+        } catch (e) {
+          // Em caso de arquivo binário ou permissão, ignorar — comportamento
+          // conservador e consistente com `rg -l`.
+        }
+      }
+    }
+  };
+
+  for (const d of dirs) walk(path.join(RAIZ, d));
+  return encontrados;
 }
 
 describe("knobs da versão publicada", () => {
@@ -96,7 +123,7 @@ describe("knobs da versão publicada", () => {
     // O caso concreto que originou o arquivo. Explícito porque o teste genérico
     // acima ficaria verde com um uso qualquer do campo em outro lugar — e o que
     // importa é este ponto, o que monta o contexto do turno.
-    const turno = readFileSync(
+    const turno = fs.readFileSync(
       path.join(RAIZ, "lib", "agent-engine", "agent", "inbound-turn.ts"),
       "utf8",
     );
