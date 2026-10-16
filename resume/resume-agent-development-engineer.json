@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "stage": "final",
+  "role": "agent",
+  "target_jd": "Agent 开发工程师",
+  "length_constraint": "concise_5_bullets",
+  "role_assumption": "纯 Agent（数据 / Harness / Evo），压缩为 5 条互补强点",
+  "ownership_confirmation": {
+    "id": "OWN-001",
+    "kind": "ownership",
+    "status": "confirmed",
+    "statement": "Agent部分都是我独立设计的",
+    "user_verbatim": "Agent部分都是我独立设计的",
+    "source": "CodeBuddy 对话",
+    "confirmed_at": "2026-10-08",
+    "scope": {
+      "designed": [
+        "Agent 执行分层（Pi 内核 / 业务 Harness / 持久 Worker）",
+        "只读 specialist 协作拓扑与证据契约",
+        "Mem0 排序投影与 SQL 事实权威契约",
+        "工具效果分类与审批边界",
+        "来源断言与版本化语义 Judge 评测协议"
+      ],
+      "inherited_or_others": [
+        "CRM 前端 UI 与产品交互（本简历未涉及）",
+        "通用 CRM 后端（leads、contacts、followup 通用部分）",
+        "部署、Docker、hostgator-setup-kit（本简历未涉及）"
+      ]
+    }
+  },
+  "title": "AI Native CRM｜受控 Agent 执行与评测闭环",
+  "introduction": {
+    "text": "面向跨境商家的客户经营 CRM。销售要在 WhatsApp 客户会话、商机记录与飞书内部事实之间核对信息，并区分客户偏好、公司知识与商业承诺的授权来源。我独立设计了 Agent 的执行分层、协作拓扑、记忆权威与评测闭环：客户事实留在 SQL 持久账本，Agent 读取确认记忆与产品依据后协作分析商机，产出带来源的报告；对客动作保留独立审批，执行轨迹与分层评测用于定位事实遗漏、协作冲突和输出失败。",
+    "claim_ids": ["AR01", "AR03", "AR04", "AR05", "AG05"],
+    "ownership_claim_ids": ["OWN-001"]
+  },
+  "contribution_note": "归因已确认：Agent 执行、协作、记忆、观测与评测层为本人独立设计（2026-10-08）。",
+  "bullets": [
+    {
+      "candidate_ids": ["AR01"],
+      "claim_ids": ["AR01", "AG01", "AG02", "BE02"],
+      "ownership_claim_ids": ["OWN-001"],
+      "summary_title": "Agent 执行分层",
+      "narrative_role": "推理循环、业务授权与任务生命周期的分层边界",
+      "dominant_signal": "architecture_decision",
+      "agent_layer": "harness",
+      "star_semantics": {
+        "situation": "模型一次返回不等同于业务完成",
+        "task": "商机分析跨多个模型回合并停在待审批状态",
+        "action": "Pi 限定为模型/工具循环内核；业务 Harness 管理客户作用域与工具副作用分类；持久 Worker 承接 SQL 队列领取、租约与恢复",
+        "result": "Run/提案/账本独立留痕，可分开审查"
+      },
+      "implementation_anchors": [
+        "三层职责划分",
+        "Run/提案/账本的独立留痕"
+      ],
+      "text": "**Agent 执行分层**：模型一次返回不等同于业务完成，把 Pi Agent Core 限定为模型/工具循环内核，业务 Harness 管理客户作用域与工具副作用分类，持久 Worker 承接 SQL 队列领取、租约检查与恢复；执行状态、动作待确认与任务终态在 Run/提案/账本独立留痕，使模型推理、业务授权与任务恢复可分开审查。"
+    },
+    {
+      "candidate_ids": ["AR03"],
+      "claim_ids": ["AR03", "AG03"],
+      "ownership_claim_ids": ["OWN-001"],
+      "summary_title": "多 Agent 协作与冲突可解释",
+      "narrative_role": "多 Agent 协作的权限选择与冲突可解释",
+      "dominant_signal": "architecture_decision",
+      "agent_layer": "harness",
+      "star_semantics": {
+        "situation": "商机评审需要多角度核对客户事实、跟进状态与公司政策",
+        "task": "专家结论可能因字段值或资料版本不同而冲突",
+        "action": "子专家限定为只读子运行并共享工具配额；父流程汇总并承接受控写入；用字段值 hash 与来源 revision 区分事实分歧、知识改版与互补片段",
+        "result": "报告可沿字段与版本追查分歧依据"
+      },
+      "implementation_anchors": [
+        "字段值 hash + 来源 revision",
+        "child partial 保留"
+      ],
+      "text": "**多 Agent 协作与冲突可解释**：商机评审需要多角度核对客户事实、跟进状态与公司政策，子专家限定为只读子运行并共享工具配额，父流程汇总并承接受控写入；用字段值 hash 与来源 revision 区分事实分歧、知识改版与互补片段，保留冲突位置，让报告可沿字段与版本追查分歧依据。"
+    },
+    {
+      "candidate_ids": ["AG08"],
+      "claim_ids": ["AG08", "AR04"],
+      "ownership_claim_ids": ["OWN-001"],
+      "summary_title": "记忆权威与可降级读取",
+      "narrative_role": "区分事实权威与可选排序服务，明确降级语义",
+      "dominant_signal": "architecture_decision",
+      "agent_layer": "data",
+      "star_semantics": {
+        "situation": "跨会话延续客户偏好需要长期记忆，但外置服务故障不能让已确认事实被判不存在",
+        "task": "区分事实权威与可选排序服务",
+        "action": "人工确认事实以 SQL 为权威，Mem0 仅作可选排序投影；远端命中核对归属标识与内容 hash 后只调整本地顺序，返回前重验隐私与最新事实",
+        "result": "远端不可用时保留本地事实，不把『未检索到』误判为『客户没说过』"
+      },
+      "implementation_anchors": [
+        "SQL 事实权威",
+        "远端命中四元组核对",
+        "覆盖与读取上限独立输出"
+      ],
+      "text": "**记忆权威与可降级读取**：跨会话延续客户偏好需要长期记忆，但外置服务故障不能让已确认事实被判不存在。人工确认事实以 SQL 为权威，外置 Mem0 仅作可选排序投影；远端命中核对归属标识与内容 hash 后只调整本地顺序，返回前重验隐私与最新事实；远端不可用时保留本地事实，不把『未检索到』误判为『客户没说过』。"
+    },
+    {
+      "candidate_ids": ["AG05"],
+      "claim_ids": ["AG05", "BE05"],
+      "ownership_claim_ids": ["OWN-001"],
+      "summary_title": "工具效果分类与审批边界",
+      "narrative_role": "为不同风险等级的工具动作定义分层守卫",
+      "dominant_signal": "architecture_decision",
+      "agent_layer": "harness",
+      "star_semantics": {
+        "situation": "客户档案查询、可逆商机更新和对外发送属于不同风险等级",
+        "task": "模型不能共享同一授权假设",
+        "action": "工具按 read-only / 可逆 lead update / internal question / customer send 分层配置守卫；对外发送只走 approved_reply 的独立发送消费者",
+        "result": "『模型看见工具 ≠ 工具能直接执行』固定在效果层"
+      },
+      "implementation_anchors": [
+        "四类工具守卫",
+        "approved_reply 独立发送消费者"
+      ],
+      "text": "**工具效果分类与审批边界**：客户档案查询、可逆商机更新和对外发送属于不同风险等级，模型不能共享同一授权假设。工具按 read-only / 可逆 lead update / internal question / customer send 分层配置守卫，对外发送只走 approved_reply 的独立发送消费者；把『模型看见工具 ≠ 工具能直接执行』固定在效果层，不让模型自由拼接权限。"
+    },
+    {
+      "candidate_ids": ["AG12"],
+      "claim_ids": ["AG12", "AR05"],
+      "ownership_claim_ids": ["OWN-001"],
+      "summary_title": "确定性先行 + 版本化语义 Judge",
+      "narrative_role": "确定性核验先于语义复核，版本条件防止旧高分覆盖新失败",
+      "dominant_signal": "verification",
+      "agent_layer": "evo",
+      "star_semantics": {
+        "situation": "报告引用真实记录仍可能把『在谈』写成『已成交』",
+        "task": "Judge 高分不能附着于新材料",
+        "action": "先在成功工具观察上做来源与字段断言的确定性核验，再运行独立语义 Judge；评测按材料与 rubric/model 指纹匹配；资料变化后拒绝旧评价；合并取更严格 verdict",
+        "result": "语义高分不能覆盖确定性失败"
+      },
+      "implementation_anchors": [
+        "确定性先于语义",
+        "fingerprint 复用条件",
+        "更严格 verdict 合并"
+      ],
+      "text": "**确定性先行 + 版本化语义 Judge**：报告引用真实记录仍可能把『在谈』写成『已成交』，Judge 高分不能附着于新材料。先在成功工具观察上做来源与字段断言的确定性核验，再运行独立语义 Judge；评测按材料与 rubric/model 指纹匹配，资料变化后拒绝旧评价，合并取更严格 verdict，使语义高分不能覆盖确定性失败。"
+    }
+  ],
+  "archived_bullets_from_long_version": [
+    {"candidate_ids": ["AG13"], "summary_title": "客户入站驱动 Mission 接续与歧义复核", "reason": "与执行分层部分重叠，精简版由 AR01 承担生命周期叙事"},
+    {"candidate_ids": ["GW01"], "summary_title": "Model Gateway 与组织 BYOK 路由一致性", "reason": "偏基础设施配置，Agent Dev 岗优先级低于记忆/评测"},
+    {"candidate_ids": ["AG10"], "summary_title": "公司知识与 WeKnora 来源可撤回", "reason": "与 Mem0 bullet 同属外部知识接入，精简版保留更普适的记忆权威"},
+    {"candidate_ids": ["AG11"], "summary_title": "Trace 与 Langfuse 脱敏投影", "reason": "观测层，精简版由评测 bullet 覆盖核验维度"}
+  ],
+  "review": {
+    "single_bullets": "每条 1 个能力 + 2-3 机制锚点；STAR 语义完整",
+    "whole_project": "5 条覆盖执行编排 / 多 Agent 协作 / 记忆权威 / 工具安全 / 评测闭环，形成 Agent 开发核心关切闭环",
+    "release_blocker": "普通 Workbench 外发未闭合；飞书未真机验收；Judge 分数为本机合成 needs_review"
+  },
+  "selection_lens": "agent_development_engineer_concise",
+  "architecture_axes": [
+    "推理循环与业务授权分离",
+    "协作权限与冲突可解释",
+    "事实权威与可选服务降级",
+    "工具副作用与审批分层",
+    "确定性先于语义复核"
+  ],
+  "selection_rationale": "按 Agent Dev Engineer 面试官最关心的五个能力面（执行编排、多 Agent、记忆、工具安全、Eval）各选一条最强候选；被压缩的 4 条在 archived_bullets_from_long_version 中保留理由",
+  "writing_contract": "star-v1",
+  "scope_kind": "whole_project",
+  "declared_scope": "CRM Agent 执行、协作、记忆与评测闭环（5 条精简版，全部在已确认归因范围内）"
+}
