@@ -19,6 +19,10 @@ permissions:
 
 jobs:
   build-and-size:
+    # Guarda de fork: `pnpm build` exige env/segredos do repo original. Num
+    # fork sem essa configuracao o build quebra por falta de ambiente, nao por
+    # defeito do codigo — aqui o job vira `skipped` (cinza) em vez de vermelho.
+    if: github.repository == 'helsome/AiNativeCrm'
     # Executor próprio para trabalho nosso quando EXECUTOR_PROPRIO=ligado; o
     # porquê e a guarda contra fork: comentário do e2e-parte no e2e.yml.
     runs-on: ${{ vars.EXECUTOR_PROPRIO == 'ligado' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && 'pi-native-proprio' || 'ubuntu-latest' }}

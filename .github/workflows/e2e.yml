@@ -151,7 +151,7 @@ jobs:
   # `tests/unit/e2e-parte-4-fala-com-os-servicos-do-runner.test.ts` reprova.
   e2e-parte:
     needs: [e2e-alcance]
-    if: needs.e2e-alcance.outputs.e2e == 'sim'
+    if: github.repository == 'helsome/AiNativeCrm' && needs.e2e-alcance.outputs.e2e == 'sim'
     # Executor próprio para trabalho NOSSO (push na main, PR de branch deste
     # repo) quando a variável de repositório EXECUTOR_PROPRIO vale `ligado`;
     # máquinas do GitHub para todo o resto, fork inclusive. A expressão decide
@@ -1899,7 +1899,7 @@ jobs:
   # um check que nenhum run produz, e NENHUM PR mergearia. Este agregador é o
   # mesmo padrão do `imagens-ok` em `publish-image.yml`.
   e2e:
-    if: always()
+    if: always() && github.repository == 'helsome/AiNativeCrm'
     needs: [e2e-alcance, e2e-parte]
     runs-on: ubuntu-latest
     # Nenhuma permissão: este job só lê o resultado de `needs` e escreve o

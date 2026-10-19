@@ -77,6 +77,11 @@ jobs:
   # o teto volta de 25 para 15 (guarda de travamento) e o orçamento desce de 16
   # para 12 — quem denuncia a suíte crescendo é o orçamento, por parte.
   verify-parte:
+    # Guarda de fork: estes gates exigem o ambiente do repositorio original
+    # (secrets/vars/branch protection). Num fork/clones sem essa configuracao
+    # eles morrem por falta de ambiente, nao por defeito do codigo — aqui viram
+    # `skipped` (cinza) em vez de vermelho. O codigo e a config seguem intactos.
+    if: github.repository == 'helsome/AiNativeCrm'
     # Guarda de travamento. O DETECTOR de crescimento é o passo `Orçamento de
     # tempo` no fim de cada parte; a medição que justifica o número está em
     # `TETOS`, em tests/unit/preambulo-do-ci-nao-come-o-relogio.test.ts.
@@ -391,7 +396,7 @@ jobs:
   # mesmo padrão do `invariants` abaixo (a razão do nome está lá). Sem grupo de
   # concurrency, de propósito: ver o cabeçalho deste arquivo.
   verify:
-    if: always()
+    if: always() && github.repository == 'helsome/AiNativeCrm'
     needs: [verify-parte]
     runs-on: ubuntu-latest
     # Nenhuma permissão: este job só lê o resultado de `needs`.
